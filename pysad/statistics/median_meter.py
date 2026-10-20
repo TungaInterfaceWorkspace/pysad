@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from heapq import heappush
+from bisect import bisect_left, insort
 
 from pysad.core.base_statistic import UnivariateStatistic
 
@@ -10,7 +10,7 @@ class MedianMeter(UnivariateStatistic):
 
     Attributes:
         num_items (int): The number of items that are used to update the statistic.
-        lst (list[float]): The list of values that are used to update the statistic. It is necessary for windowing operations.
+        lst (list[float]): The sorted list of values that are used to update the statistic. It is necessary for windowing operations.
     """
 
     def __init__(self) -> None:
@@ -26,7 +26,7 @@ class MedianMeter(UnivariateStatistic):
         Returns:
             object: self.
         """
-        heappush(self.lst, num)
+        insort(self.lst, num)
         self.num_items += 1
 
         return self
@@ -40,7 +40,7 @@ class MedianMeter(UnivariateStatistic):
         Returns:
             object: self.
         """
-        self.lst.remove(num)
+        del self.lst[bisect_left(self.lst, num)]
         self.num_items -= 1
 
         return self
@@ -51,7 +51,6 @@ class MedianMeter(UnivariateStatistic):
         Returns:
             float: The statistic.
         """
-        self.lst = sorted(self.lst)
         if self.num_items % 2 == 0:
             return (self.lst[self.num_items // 2] + self.lst[self.num_items // 2 - 1]) / 2
         else:

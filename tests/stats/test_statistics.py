@@ -192,3 +192,27 @@ def test_variance_meter_restarts_after_removing_every_value():
     stat.update(1.0).update(2.0)
 
     assert stat.get() == 0.25
+
+
+def test_median_meter_matches_numpy_after_random_updates_and_removals():
+    """#369: get() sorted the whole list on every call."""
+    import numpy as np
+
+    from pysad.statistics import MedianMeter
+    from pysad.utils import fix_seed
+
+    fix_seed(61)
+
+    stat = MedianMeter()
+    held: list[float] = []
+    for _ in range(200):
+        if held and np.random.rand() < 0.3:
+            num = held.pop(np.random.randint(len(held)))
+            stat.remove(num)
+        else:
+            num = float(np.random.rand())
+            held.append(num)
+            stat.update(num)
+
+        if held:
+            assert np.isclose(stat.get(), np.median(held))
